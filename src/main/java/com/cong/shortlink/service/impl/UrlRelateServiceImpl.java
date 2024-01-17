@@ -1,5 +1,6 @@
 package com.cong.shortlink.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cong.shortlink.common.DeleteRequest;
@@ -15,8 +16,10 @@ import com.cong.shortlink.model.entity.UrlRelate;
 import com.cong.shortlink.model.entity.User;
 import com.cong.shortlink.service.UrlRelateService;
 import com.cong.shortlink.service.UserService;
+import com.cong.shortlink.utils.Base62Converter;
 import com.cong.shortlink.utils.NetUtils;
 import com.cong.shortlink.utils.SqlUtils;
+import com.google.common.hash.Hashing;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -45,8 +48,10 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         //校验
         this.validUrlRelate(urlRelate, true);
 
-        //TODO 生成短链
-        urlRelate.setSortUrl(null);
+        //生成短链(后续考虑hash冲突)
+        String shortUrl = this.createShortUrl(longUrl);
+
+        urlRelate.setSortUrl(shortUrl);
         //TODO 自动解析获取title
         urlRelate.setTitle(null);
 
@@ -61,6 +66,17 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         //返回urlRelate的id
         return urlRelate.getId();
 
+    }
+
+    private String createShortUrl(String longUrl) {
+        long shortUrl = Hashing.murmur3_32().hashUnencodedChars(longUrl).padToLong();
+        String shortUrlStr64 = Base62Converter.toBase62(shortUrl);
+        UrlRelate urlRelate = this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getSortUrl, shortUrlStr64));
+        if (urlRelate!=null){
+            //hash冲突重新生成 在结尾重新添加一个分布式id（暂用62位时间戳）
+            shortUrlStr64 = shortUrlStr64 + Base62Converter.toBase62(System.currentTimeMillis());
+        }
+        return shortUrlStr64;
     }
 
     @Override
