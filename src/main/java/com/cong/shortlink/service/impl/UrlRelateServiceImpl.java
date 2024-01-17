@@ -72,7 +72,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         long shortUrl = Hashing.murmur3_32().hashUnencodedChars(longUrl).padToLong();
         String shortUrlStr64 = Base62Converter.toBase62(shortUrl);
         UrlRelate urlRelate = this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getSortUrl, shortUrlStr64));
-        if (urlRelate!=null){
+        if (urlRelate != null) {
             //hash冲突重新生成 在结尾重新添加一个分布式id（暂用62位时间戳）
             shortUrlStr64 = shortUrlStr64 + Base62Converter.toBase62(System.currentTimeMillis());
         }
@@ -88,6 +88,9 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         // 创建时，参数不能为空
         if (add) {
             ThrowUtils.throwIf(StringUtils.isAnyBlank(longUrl), ErrorCode.PARAMS_ERROR);
+            //校验长链是否存在
+            ThrowUtils.throwIf(this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getLongUrl, longUrl)) != null
+                    , ErrorCode.PARAMS_ERROR,"长链已存在");
         }
         // 校验长链规则 主域名合法性 查询参数域名合法性
         NetUtils.validateLink(longUrl);
