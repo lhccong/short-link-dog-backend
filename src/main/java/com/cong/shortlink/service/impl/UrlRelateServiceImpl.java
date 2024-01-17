@@ -204,6 +204,15 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
 
     }
 
+    @Override
+    public String getLongLink(String shortLink) {
+        UrlRelate urlRelate = this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getSortUrl, shortLink));
+        if (urlRelate == null){
+            return "https://www.baidu.com";
+        }
+        return urlRelate.getLongUrl();
+    }
+
 }
 
 

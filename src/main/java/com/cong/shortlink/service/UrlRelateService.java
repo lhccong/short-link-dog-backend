@@ -48,4 +48,12 @@ public interface UrlRelateService extends IService<UrlRelate> {
     boolean updateUrlRelate(UrlRelateUpdateRequest urlRelateUpdateRequest);
 
     QueryWrapper<UrlRelate> getQueryWrapper(UrlRelateQueryRequest urlRelateQueryRequest);
+
+    /**
+     * 获取长链接
+     *
+     * @param shortLink 短链接
+     * @return {@link String}
+     */
+    String getLongLink(String shortLink);
 }
