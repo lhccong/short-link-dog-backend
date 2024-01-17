@@ -19,7 +19,7 @@ import com.cong.shortlink.service.UserService;
 import com.cong.shortlink.utils.Base62Converter;
 import com.cong.shortlink.utils.NetUtils;
 import com.cong.shortlink.utils.SqlUtils;
-import com.google.common.hash.Hashing;
+import net.openhft.hashing.LongHashFunction;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -69,14 +69,25 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
     }
 
     private String createShortUrl(String longUrl) {
-        long shortUrl = Hashing.murmur3_32().hashUnencodedChars(longUrl).padToLong();
-        String shortUrlStr64 = Base62Converter.toBase62(shortUrl);
+
+        String shortUrlStr64 = getShortUrlBySha256(longUrl);
+
         UrlRelate urlRelate = this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getSortUrl, shortUrlStr64));
         if (urlRelate != null) {
             //hash冲突重新生成 在结尾重新添加一个分布式id（暂用62位时间戳）
             shortUrlStr64 = shortUrlStr64 + Base62Converter.toBase62(System.currentTimeMillis());
         }
         return shortUrlStr64;
+    }
+
+    private static String getShortUrlBySha256(String longUrl){
+        // 获取 MurmurHash3 的实例
+        LongHashFunction murmur3 = LongHashFunction.murmur_3();
+
+        // 计算输入字符串的哈希值
+        long hash = murmur3.hashChars(longUrl);
+
+        return Base62Converter.toBase62(hash);
     }
 
     @Override
