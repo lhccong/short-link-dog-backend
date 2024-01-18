@@ -16,11 +16,14 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class NetUtils {
 
+    private NetUtils() {
+        throw new IllegalStateException("Utility class");
+    }
     private static final List<String> VALID_DOMAINS = new ArrayList<>();
 
     // 初始化合法域名列表
     static {
-        VALID_DOMAINS.add("baidu.com");
+        VALID_DOMAINS.add("www.baidu.com");
         // 添加其他合法域名
     }
 

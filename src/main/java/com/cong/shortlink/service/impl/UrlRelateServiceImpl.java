@@ -1,5 +1,6 @@
 package com.cong.shortlink.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -28,10 +29,14 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.redisson.Redisson;
+import org.redisson.api.RBloomFilter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+
+import static com.cong.shortlink.constant.RedissonConstants.SHORT_LINK_BLOOM_FILTER_KEY;
 
 /**
  * @author liuhuaicong
@@ -44,6 +49,9 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         implements UrlRelateService {
     @Resource
     private UserService userService;
+
+    @Resource
+    private Redisson redisson;
 
     @Override
     public Long addUrlRelate(UrlRelateAddRequest urlRelateAddRequest) {
@@ -61,8 +69,6 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         urlRelate.setSortUrl(shortUrl);
         //自动解析获取title
         setUrlTitleAndImg(longUrl, urlRelate);
-        urlRelate.setTitle(null);
-
         //获取登录用户
         User loginUser = userService.getLoginUser();
         urlRelate.setUserId(loginUser.getId());
@@ -79,12 +85,16 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
     private String createShortUrl(String longUrl) {
 
         String shortUrlStr64 = getShortUrlBySha256(longUrl);
+        //使用布隆过滤器校验
+        RBloomFilter<String> bloomFilter = redisson.getBloomFilter(SHORT_LINK_BLOOM_FILTER_KEY);
+        //初始化布隆过滤器：预计元素为100000000L,误差率为3%
+        bloomFilter.tryInit(100000000L,0.03);
 
-        UrlRelate urlRelate = this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getSortUrl, shortUrlStr64));
-        if (urlRelate != null) {
+        if (bloomFilter.contains(shortUrlStr64)) {
             //hash冲突重新生成 在结尾重新添加一个分布式id（暂用62位时间戳）
             shortUrlStr64 = shortUrlStr64 + Base62Converter.toBase62(System.currentTimeMillis());
         }
+        bloomFilter.add(shortUrlStr64);
         return shortUrlStr64;
     }
 
@@ -108,7 +118,8 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         if (add) {
             ThrowUtils.throwIf(StringUtils.isAnyBlank(longUrl), ErrorCode.PARAMS_ERROR);
             //校验长链是否存在
-            ThrowUtils.throwIf(this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getLongUrl, longUrl)) != null
+            ThrowUtils.throwIf(this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getLongUrl, longUrl)
+                            .eq(UrlRelate::getUserId, StpUtil.getLoginId())) != null
                     , ErrorCode.PARAMS_ERROR, "长链已存在");
         }
         // 校验长链规则 主域名合法性 查询参数域名合法性
@@ -231,7 +242,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
             Elements links = doc.select("head");
             Elements titleLinks = links.get(0).select("title");
             title = titleLinks.get(0).text();
-            log.info("title={}", title);
+            log.info("成功解析网站标题============={}", title);
             if (CharSequenceUtil.isBlank(urlRelate.getTitle())) {
                 urlRelate.setTitle(title);
             }
@@ -242,7 +253,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
             if (!(faviconUrl.toLowerCase().startsWith("https") || faviconUrl.toLowerCase().startsWith("http"))) {
                 faviconUrl = url + faviconUrl;
             }
-            log.info("icon={}", faviconUrl);
+            log.info("网站icon============={}", faviconUrl);
             if (CharSequenceUtil.isBlank(urlRelate.getUrlImg())) {
                 urlRelate.setUrlImg(faviconUrl);
             }
