@@ -3,7 +3,6 @@ package com.cong.shortlink.model.dto.urlrelate;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 更新请求
@@ -22,6 +21,15 @@ public class UrlRelateUpdateRequest implements Serializable {
      */
     private String longUrl;
 
+    /**
+     * 链接标题
+     */
+    private String title;
+
+    /**
+     * 链接图标
+     */
+    private String urlImg;
 
     private static final long serialVersionUID = 1L;
 }
