@@ -15,5 +15,7 @@ public interface CommonConstant {
      * 降序
      */
     String SORT_ORDER_DESC = " descend";
+
+    String DEFAULT_URL = "https://www.baidu.com";
     
 }

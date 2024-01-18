@@ -32,6 +32,7 @@ create table if not exists url_relate
 (
    `id` bigint unsigned NOT NULL AUTO_INCREMENT primary key,
    title     varchar(256)                           null comment '链接标题',
+   urlImg     varchar(1024)                           null comment '链接图标',
    `longUrl` varchar(160) DEFAULT NULL COMMENT '长链',
    `sortUrl` varchar(10) DEFAULT NULL COMMENT '短链',
    userId     bigint                             not null comment '创建用户 id',

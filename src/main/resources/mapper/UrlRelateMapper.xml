@@ -7,6 +7,7 @@
     <resultMap id="BaseResultMap" type="com.cong.shortlink.model.entity.UrlRelate">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="title" column="title" jdbcType="VARCHAR"/>
+            <result property="urlImg" column="urlImg" jdbcType="VARCHAR"/>
             <result property="longUrl" column="longUrl" jdbcType="VARCHAR"/>
             <result property="sortUrl" column="sortUrl" jdbcType="VARCHAR"/>
             <result property="userId" column="userId" jdbcType="BIGINT"/>
@@ -19,9 +20,9 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,title,longUrl,
-        sortUrl,userId,visits,
-        ipNums,userNums,createTime,
-        updateTime,isDelete
+        id,title,urlImg,
+        longUrl,sortUrl,userId,
+        visits,ipNums,userNums,
+        createTime,updateTime,isDelete
     </sql>
 </mapper>

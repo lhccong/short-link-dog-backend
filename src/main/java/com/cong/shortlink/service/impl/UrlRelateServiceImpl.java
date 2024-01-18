@@ -1,5 +1,6 @@
 package com.cong.shortlink.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -19,9 +20,14 @@ import com.cong.shortlink.service.UserService;
 import com.cong.shortlink.utils.Base62Converter;
 import com.cong.shortlink.utils.NetUtils;
 import com.cong.shortlink.utils.SqlUtils;
+import lombok.extern.slf4j.Slf4j;
 import net.openhft.hashing.LongHashFunction;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +39,7 @@ import javax.annotation.Resource;
  * @createDate 2024-01-17 14:43:37
  */
 @Service
+@Slf4j
 public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate>
         implements UrlRelateService {
     @Resource
@@ -52,7 +59,8 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         String shortUrl = this.createShortUrl(longUrl);
 
         urlRelate.setSortUrl(shortUrl);
-        //TODO 自动解析获取title
+        //自动解析获取title
+        setUrlTitleAndImg(longUrl, urlRelate);
         urlRelate.setTitle(null);
 
         //获取登录用户
@@ -80,7 +88,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         return shortUrlStr64;
     }
 
-    private static String getShortUrlBySha256(String longUrl){
+    private static String getShortUrlBySha256(String longUrl) {
         // 获取 MurmurHash3 的实例
         LongHashFunction murmur3 = LongHashFunction.murmur_3();
 
@@ -101,7 +109,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
             ThrowUtils.throwIf(StringUtils.isAnyBlank(longUrl), ErrorCode.PARAMS_ERROR);
             //校验长链是否存在
             ThrowUtils.throwIf(this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getLongUrl, longUrl)) != null
-                    , ErrorCode.PARAMS_ERROR,"长链已存在");
+                    , ErrorCode.PARAMS_ERROR, "长链已存在");
         }
         // 校验长链规则 主域名合法性 查询参数域名合法性
         NetUtils.validateLink(longUrl);
@@ -207,12 +215,43 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
     @Override
     public String getLongLink(String shortLink) {
         UrlRelate urlRelate = this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getSortUrl, shortLink));
-        if (urlRelate == null){
-            return "https://www.baidu.com";
+        if (urlRelate == null) {
+            return CommonConstant.DEFAULT_URL;
         }
+        //做校验、接口访问次数+1
         return urlRelate.getLongUrl();
     }
 
+    public static void setUrlTitleAndImg(String url, UrlRelate urlRelate) {
+        //通过url解析网址title和logo
+        String title;
+        try {
+            //还是一样先从一个URL加载一个Document对象。
+            Document doc = Jsoup.connect(url).get();
+            Elements links = doc.select("head");
+            Elements titleLinks = links.get(0).select("title");
+            title = titleLinks.get(0).text();
+            log.info("title={}", title);
+            if (CharSequenceUtil.isBlank(urlRelate.getTitle())) {
+                urlRelate.setTitle(title);
+            }
+            Element faviconLink = doc.head().select("link[href~=.*\\.(ico|png)]").first();
+            String faviconUrl = faviconLink != null ? faviconLink.attr("href") : "";
+
+            // Sometimes the favicon URL is relative, so we might need to make it absolute
+            if (!(faviconUrl.toLowerCase().startsWith("https") || faviconUrl.toLowerCase().startsWith("http"))) {
+                faviconUrl = url + faviconUrl;
+            }
+            log.info("icon={}", faviconUrl);
+            if (CharSequenceUtil.isBlank(urlRelate.getUrlImg())) {
+                urlRelate.setUrlImg(faviconUrl);
+            }
+
+        } catch (Exception e) {
+            log.error("通过url={} 网址解析title和logo 异常：{}", url, e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }
 
 

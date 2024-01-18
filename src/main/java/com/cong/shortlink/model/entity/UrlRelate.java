@@ -10,6 +10,7 @@ import lombok.Data;
 
 /**
  * 链接关系表
+ * @author liuhuaicong
  * @TableName url_relate
  */
 @TableName(value ="url_relate")
@@ -22,9 +23,14 @@ public class UrlRelate implements Serializable {
     private Long id;
 
     /**
-     * 标题
+     * 链接标题
      */
     private String title;
+
+    /**
+     * 链接图标
+     */
+    private String urlImg;
 
     /**
      * 长链

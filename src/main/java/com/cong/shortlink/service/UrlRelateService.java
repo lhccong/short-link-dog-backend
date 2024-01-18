@@ -5,8 +5,8 @@ import com.cong.shortlink.common.DeleteRequest;
 import com.cong.shortlink.model.dto.urlrelate.UrlRelateAddRequest;
 import com.cong.shortlink.model.dto.urlrelate.UrlRelateQueryRequest;
 import com.cong.shortlink.model.dto.urlrelate.UrlRelateUpdateRequest;
-import com.cong.shortlink.model.entity.UrlRelate;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.cong.shortlink.model.entity.UrlRelate;
 
 /**
 * @author liuhuaicong

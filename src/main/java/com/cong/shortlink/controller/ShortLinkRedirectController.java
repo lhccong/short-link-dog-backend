@@ -31,7 +31,7 @@ public class ShortLinkRedirectController {
         // 可以根据你的需求将长链接与短链接关联起来
         String longLink = urlRelateService.getLongLink(shortLink);
 
-        return new ModelAndView(new RedirectView(longLink, true));
+        return new ModelAndView(new RedirectView(longLink, false));
 
     }
 
