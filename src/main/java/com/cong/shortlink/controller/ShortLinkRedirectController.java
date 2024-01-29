@@ -19,7 +19,7 @@ import javax.annotation.Resource;
  */
 @Controller
 @RequestMapping("/link_dog")
-@Api(tags = "短链重定向")
+//@Api(tags = "短链重定向")
 public class ShortLinkRedirectController {
     @Resource
     private UrlRelateService urlRelateService;

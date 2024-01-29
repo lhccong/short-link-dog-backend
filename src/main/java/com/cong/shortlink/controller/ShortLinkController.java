@@ -16,7 +16,6 @@ import com.cong.shortlink.model.entity.UrlRelate;
 import com.cong.shortlink.model.entity.User;
 import com.cong.shortlink.service.UrlRelateService;
 import com.cong.shortlink.service.UserService;
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +29,7 @@ import javax.annotation.Resource;
 @RestController
 @RequestMapping("/short_link")
 @Slf4j
-@Api(tags = "短链管理")
+//@Api(tags = "短链管理")
 public class ShortLinkController {
 
     @Resource
@@ -80,8 +79,7 @@ public class ShortLinkController {
      * @return {@link BaseResponse}<{@link Boolean}>
      */
     @PostMapping("/update")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    @ApiOperation(value = "更新（仅管理员）")
+    @ApiOperation(value = "更新")
     public BaseResponse<Boolean> updateUrlRelate(@RequestBody UrlRelateUpdateRequest urlRelateUpdateRequest) {
         if (urlRelateUpdateRequest == null || urlRelateUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);

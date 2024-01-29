@@ -16,6 +16,14 @@ public interface CommonConstant {
      */
     String SORT_ORDER_DESC = " descend";
 
+    /**
+     * 标签颜色
+     */
+    String[] TAG_COLORS = new String[]{"pink", "red", "orange", "green", "cyan", "blue", "purple"};
+
+    /**
+     * 默认 URL
+     */
     String DEFAULT_URL = "https://www.baidu.com";
     
 }

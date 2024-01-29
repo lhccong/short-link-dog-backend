@@ -17,13 +17,14 @@ import com.cong.shortlink.model.dto.user.UserRegisterRequest;
 import com.cong.shortlink.model.dto.user.UserUpdateMyRequest;
 import com.cong.shortlink.model.dto.user.UserUpdateRequest;
 import com.cong.shortlink.model.entity.User;
-import com.cong.shortlink.model.vo.LoginUserVO;
-import com.cong.shortlink.model.vo.UserVO;
+import com.cong.shortlink.model.vo.user.LoginUserVO;
+import com.cong.shortlink.model.vo.user.TokenLoginUserVo;
+import com.cong.shortlink.model.vo.user.UserVO;
 import com.cong.shortlink.service.UserService;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import io.swagger.annotations.Api;
+
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
@@ -48,7 +49,7 @@ import static com.cong.shortlink.constant.SystemConstants.SALT;
 @RestController
 @RequestMapping("/user")
 @Slf4j
-@Api(tags = "用户相关")
+//@Api(tags = "用户相关")
 public class UserController {
 
     @Resource
@@ -89,7 +90,7 @@ public class UserController {
      */
     @PostMapping("/login")
     @ApiOperation(value = "用户登录")
-    public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest) {
+    public BaseResponse<TokenLoginUserVo> userLogin(@RequestBody UserLoginRequest userLoginRequest) {
         if (userLoginRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -98,8 +99,8 @@ public class UserController {
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword);
-        return ResultUtils.success(loginUserVO);
+        TokenLoginUserVo tokenLoginUserVo = userService.userLogin(userAccount, userPassword);
+        return ResultUtils.success(tokenLoginUserVo);
     }
 
     /**

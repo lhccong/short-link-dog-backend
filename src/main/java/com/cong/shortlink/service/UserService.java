@@ -4,8 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.cong.shortlink.model.dto.user.UserQueryRequest;
 import com.cong.shortlink.model.entity.User;
-import com.cong.shortlink.model.vo.LoginUserVO;
-import com.cong.shortlink.model.vo.UserVO;
+import com.cong.shortlink.model.vo.user.LoginUserVO;
+import com.cong.shortlink.model.vo.user.TokenLoginUserVo;
+import com.cong.shortlink.model.vo.user.UserVO;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
@@ -33,7 +34,7 @@ public interface UserService extends IService<User> {
      * @param userPassword 用户密码
      * @return 脱敏后的用户信息
      */
-    LoginUserVO userLogin(String userAccount, String userPassword);
+    TokenLoginUserVo userLogin(String userAccount, String userPassword);
 
     /**
      * 用户通过 MP Open 登录

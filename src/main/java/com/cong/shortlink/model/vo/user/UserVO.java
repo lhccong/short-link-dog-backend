@@ -1,18 +1,18 @@
-package com.cong.shortlink.model.vo;
+package com.cong.shortlink.model.vo.user;
 
 import java.io.Serializable;
 import java.util.Date;
 import lombok.Data;
 
 /**
- * 已登录用户视图（脱敏）
+ * 用户视图（脱敏）
  * # @author <a href="https://github.com/lhccong">程序员聪</a>
- **/
+ */
 @Data
-public class LoginUserVO implements Serializable {
+public class UserVO implements Serializable {
 
     /**
-     * 用户 id
+     * id
      */
     private Long id;
 
@@ -40,11 +40,6 @@ public class LoginUserVO implements Serializable {
      * 创建时间
      */
     private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
 
     private static final long serialVersionUID = 1L;
 }

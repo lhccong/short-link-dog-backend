@@ -10,7 +10,6 @@ import lombok.Data;
 
 /**
  * 链接关系表
- * @author liuhuaicong
  * @TableName url_relate
  */
 @TableName(value ="url_relate")
@@ -31,6 +30,11 @@ public class UrlRelate implements Serializable {
      * 链接图标
      */
     private String urlImg;
+
+    /**
+     * 标签列表（json 数组）
+     */
+    private String tags;
 
     /**
      * 长链
@@ -61,6 +65,31 @@ public class UrlRelate implements Serializable {
      * 访问数
      */
     private Integer userNums;
+
+    /**
+     * 允许访问次数
+     */
+    private Integer allowNum;
+
+    /**
+     * 是否私密
+     */
+    private Integer privateTarget;
+
+    /**
+     * 密码
+     */
+    private String password;
+
+    /**
+     * 过期时间
+     */
+    private Date expireTime;
+
+    /**
+     * 状态：0 草稿 1 发布 2 禁用
+     */
+    private Integer status;
 
     /**
      * 创建时间

@@ -121,9 +121,10 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
             ThrowUtils.throwIf(this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getLongUrl, longUrl)
                             .eq(UrlRelate::getUserId, StpUtil.getLoginId())) != null
                     , ErrorCode.PARAMS_ERROR, "长链已存在");
+            // 校验长链规则 主域名合法性 查询参数域名合法性
+            NetUtils.validateLink(longUrl);
         }
-        // 校验长链规则 主域名合法性 查询参数域名合法性
-        NetUtils.validateLink(longUrl);
+
     }
 
     @Override

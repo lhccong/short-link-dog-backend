@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-
 /**
  * 查询请求
  * # @author <a href="https://github.com/lhccong">程序员聪</a>
@@ -33,6 +32,7 @@ public class UrlRelateQueryRequest extends PageRequest implements Serializable {
      * 创建用户 id
      */
     private Long userId;
+
 
     private static final long serialVersionUID = 1L;
 }

@@ -1,4 +1,4 @@
-package com.cong.shortlink.model.vo;
+package com.cong.shortlink.model.vo.user;
 
 import cn.dev33.satoken.stp.SaTokenInfo;
 import lombok.Data;

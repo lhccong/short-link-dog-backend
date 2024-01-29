@@ -8,12 +8,18 @@
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="title" column="title" jdbcType="VARCHAR"/>
             <result property="urlImg" column="urlImg" jdbcType="VARCHAR"/>
+            <result property="tags" column="tags" jdbcType="VARCHAR"/>
             <result property="longUrl" column="longUrl" jdbcType="VARCHAR"/>
             <result property="sortUrl" column="sortUrl" jdbcType="VARCHAR"/>
             <result property="userId" column="userId" jdbcType="BIGINT"/>
             <result property="visits" column="visits" jdbcType="INTEGER"/>
             <result property="ipNums" column="ipNums" jdbcType="INTEGER"/>
             <result property="userNums" column="userNums" jdbcType="INTEGER"/>
+            <result property="allowNum" column="allowNum" jdbcType="INTEGER"/>
+            <result property="privateTarget" column="privateTarget" jdbcType="TINYINT"/>
+            <result property="password" column="password" jdbcType="VARCHAR"/>
+            <result property="expireTime" column="expireTime" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
@@ -21,8 +27,10 @@
 
     <sql id="Base_Column_List">
         id,title,urlImg,
-        longUrl,sortUrl,userId,
-        visits,ipNums,userNums,
+        tags,longUrl,sortUrl,
+        userId,visits,ipNums,
+        userNums,allowNum,privateTarget,
+        password,expireTime,status,
         createTime,updateTime,isDelete
     </sql>
 </mapper>
