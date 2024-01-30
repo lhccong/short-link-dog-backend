@@ -1,7 +1,9 @@
 package com.cong.shortlink.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,10 +17,16 @@ import com.cong.shortlink.model.dto.urlrelate.UrlRelateAddRequest;
 import com.cong.shortlink.model.dto.urlrelate.UrlRelateQueryRequest;
 import com.cong.shortlink.model.dto.urlrelate.UrlRelateUpdateRequest;
 import com.cong.shortlink.model.entity.UrlRelate;
+import com.cong.shortlink.model.entity.UrlTag;
 import com.cong.shortlink.model.entity.User;
+import com.cong.shortlink.model.enums.ShortLinkStatusEnum;
+import com.cong.shortlink.model.vo.shortlink.UrlRelateVo;
+import com.cong.shortlink.model.vo.urltag.UrlTagVo;
 import com.cong.shortlink.service.UrlRelateService;
+import com.cong.shortlink.service.UrlTagService;
 import com.cong.shortlink.service.UserService;
 import com.cong.shortlink.utils.Base62Converter;
+import com.cong.shortlink.utils.BeanCopyUtils;
 import com.cong.shortlink.utils.NetUtils;
 import com.cong.shortlink.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -31,12 +39,16 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.redisson.Redisson;
 import org.redisson.api.RBloomFilter;
+import org.redisson.api.RMap;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
-import static com.cong.shortlink.constant.RedissonConstants.SHORT_LINK_BLOOM_FILTER_KEY;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.cong.shortlink.constant.RedissonConstants.*;
 
 /**
  * @author liuhuaicong
@@ -52,6 +64,9 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
 
     @Resource
     private Redisson redisson;
+
+    @Resource
+    private UrlTagService urlTagService;
 
     @Override
     public Long addUrlRelate(UrlRelateAddRequest urlRelateAddRequest) {
@@ -88,7 +103,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         //使用布隆过滤器校验
         RBloomFilter<String> bloomFilter = redisson.getBloomFilter(SHORT_LINK_BLOOM_FILTER_KEY);
         //初始化布隆过滤器：预计元素为100000000L,误差率为3%
-        bloomFilter.tryInit(100000000L,0.03);
+        bloomFilter.tryInit(100000000L, 0.03);
 
         if (bloomFilter.contains(shortUrlStr64)) {
             //hash冲突重新生成 在结尾重新添加一个分布式id（暂用62位时间戳）
@@ -224,14 +239,69 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
 
     }
 
+    /**
+     * 获取长链接
+     *
+     * @param shortLink 短链接
+     * @return {@link UrlRelate}
+     */
     @Override
-    public String getLongLink(String shortLink) {
-        UrlRelate urlRelate = this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getSortUrl, shortLink));
-        if (urlRelate == null) {
-            return CommonConstant.DEFAULT_URL;
+    public UrlRelate getLongLink(String shortLink) {
+        // 获取短链接对应的UrlRelate对象
+        RMap<String, UrlRelate> shortLinkMap = redisson.getMap(SHORT_LINK_CACHE_MAP_KEY);
+        if (shortLinkMap.containsKey(shortLink)) {
+            UrlRelate urlRelate = shortLinkMap.get(shortLink);
+            addAndCheck(urlRelate);
+            return urlRelate;
+        } else {
+            // 通过UrlRelate的sortUrl和status查询UrlRelate对象
+            UrlRelate urlRelate = this.getOne(new LambdaQueryWrapper<UrlRelate>().eq(UrlRelate::getSortUrl, shortLink)
+                    .eq(UrlRelate::getStatus, ShortLinkStatusEnum.PUBLISH.getValue()));
+            if (urlRelate == null) {
+                throw new BusinessException(ErrorCode.LINK_ERROR, "链接不存在");
+            }
+            addAndCheck(urlRelate);
+            // 将短链接和UrlRelate对象存入shortLinkMap中
+            shortLinkMap.put(shortLink, urlRelate);
+            return urlRelate;
         }
-        //做校验、接口访问次数+1
-        return urlRelate.getLongUrl();
+
+    }
+
+    private void addAndCheck(UrlRelate urlRelate) {
+        //做校验、接口访问次数+1   记录IP
+        this.update()
+                .eq("id", urlRelate.getId())
+                .setSql("ipNums = ipNums + 1")
+                .update();
+    }
+
+    @Override
+    public UrlRelateVo getByShortLink(String shortLink) {
+
+        UrlRelate urlRelate = getLongLink(shortLink);
+
+        return getUrlRelateVo(urlRelate);
+    }
+
+    public UrlRelateVo getUrlRelateVo(UrlRelate urlRelate) {
+        UrlRelateVo urlRelateVo = BeanCopyUtils.copyBean(urlRelate, UrlRelateVo.class);
+        //获取标签列表
+        String tagsStr = urlRelate.getTags();
+        if (CharSequenceUtil.isNotBlank(tagsStr)) {
+            List<String> tagIds = JSONUtil.toBean(tagsStr, new TypeReference<>() {
+            }, true);
+            List<UrlTag> userTagList = urlTagService.list(new LambdaQueryWrapper<UrlTag>().in(UrlTag::getId, tagIds));
+            List<UrlTagVo> tagVos = userTagList.stream().map(item -> BeanCopyUtils.copyBean(item, UrlTagVo.class)).collect(Collectors.toList());
+            urlRelateVo.setTags(tagVos);
+        }
+
+        return urlRelateVo;
+    }
+
+    @Override
+    public List<UrlRelateVo> getUrlRelateVo(List<UrlRelate> records) {
+        return records.stream().map(this::getUrlRelateVo).collect(Collectors.toList());
     }
 
     public static void setUrlTitleAndImg(String url, UrlRelate urlRelate) {

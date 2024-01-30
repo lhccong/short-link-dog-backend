@@ -7,6 +7,9 @@ import com.cong.shortlink.model.dto.urlrelate.UrlRelateQueryRequest;
 import com.cong.shortlink.model.dto.urlrelate.UrlRelateUpdateRequest;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.cong.shortlink.model.entity.UrlRelate;
+import com.cong.shortlink.model.vo.shortlink.UrlRelateVo;
+
+import java.util.List;
 
 /**
 * @author liuhuaicong
@@ -53,7 +56,23 @@ public interface UrlRelateService extends IService<UrlRelate> {
      * 获取长链接
      *
      * @param shortLink 短链接
-     * @return {@link String}
+     * @return {@link UrlRelate}
      */
-    String getLongLink(String shortLink);
+    UrlRelate getLongLink(String shortLink);
+
+    /**
+     * 通过短链接获取
+     *
+     * @param shortLink 短链接
+     * @return {@link UrlRelateVo}
+     */
+    UrlRelateVo getByShortLink(String shortLink);
+
+    /**
+     * 获取 URL 相关 VO
+     *
+     * @param records 记录
+     * @return {@link List}<{@link UrlRelateVo}>
+     */
+    List<UrlRelateVo> getUrlRelateVo(List<UrlRelate> records);
 }

@@ -1,5 +1,6 @@
 package com.cong.shortlink.controller;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cong.shortlink.annotation.AuthCheck;
 import com.cong.shortlink.common.BaseResponse;
@@ -14,6 +15,7 @@ import com.cong.shortlink.model.dto.urlrelate.UrlRelateQueryRequest;
 import com.cong.shortlink.model.dto.urlrelate.UrlRelateUpdateRequest;
 import com.cong.shortlink.model.entity.UrlRelate;
 import com.cong.shortlink.model.entity.User;
+import com.cong.shortlink.model.vo.shortlink.UrlRelateVo;
 import com.cong.shortlink.service.UrlRelateService;
 import com.cong.shortlink.service.UserService;
 import io.swagger.annotations.ApiOperation;
@@ -21,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 短链接口
@@ -90,7 +93,7 @@ public class ShortLinkController {
     /**
      * 根据 id 获取
      *
-     * @param id      编号
+     * @param id 编号
      * @return {@link BaseResponse}<{@link UrlRelate}>
      */
     @GetMapping("/get/vo")
@@ -131,14 +134,17 @@ public class ShortLinkController {
      */
     @PostMapping("/list/page/vo")
     @ApiOperation(value = "分页获取列表（封装类）")
-    public BaseResponse<Page<UrlRelate>> listUrlRelateVoByPage(@RequestBody UrlRelateQueryRequest urlRelateQueryRequest) {
+    public BaseResponse<Page<UrlRelateVo>> listUrlRelateVoByPage(@RequestBody UrlRelateQueryRequest urlRelateQueryRequest) {
         long current = urlRelateQueryRequest.getCurrent();
         long size = urlRelateQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         Page<UrlRelate> urlRelatePage = urlRelateService.page(new Page<>(current, size),
                 urlRelateService.getQueryWrapper(urlRelateQueryRequest));
-        return ResultUtils.success(urlRelatePage);
+        Page<UrlRelateVo> urlRelateVoPage = new Page<>(current, size, urlRelatePage.getTotal());
+        List<UrlRelateVo> urlRelateVo = urlRelateService.getUrlRelateVo(urlRelatePage.getRecords());
+        urlRelateVoPage.setRecords(urlRelateVo);
+        return ResultUtils.success(urlRelateVoPage);
     }
 
     /**
@@ -165,4 +171,23 @@ public class ShortLinkController {
     }
 
     // endregion
+
+    /**
+     * 根据短链获取长链
+     *
+     * @param shortLink 短链
+     * @return {@link BaseResponse}<{@link UrlRelate}>
+     */
+    @GetMapping("/getByShort")
+    @ApiOperation(value = "根据短链获取长链")
+    public BaseResponse<UrlRelateVo> getUrlRelateVoByShortLink(String shortLink) {
+        if (CharSequenceUtil.isBlank(shortLink)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        UrlRelateVo urlRelateVo = urlRelateService.getByShortLink(shortLink);
+        if (urlRelateVo == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        return ResultUtils.success(urlRelateVo);
+    }
 }
