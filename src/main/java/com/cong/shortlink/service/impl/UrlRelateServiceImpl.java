@@ -1,6 +1,7 @@
 package com.cong.shortlink.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
@@ -294,9 +295,12 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         if (CharSequenceUtil.isNotBlank(tagsStr)) {
             List<String> tagIds = JSONUtil.toBean(tagsStr, new TypeReference<List<String>>() {
             }, true);
-            List<UrlTag> userTagList = urlTagService.list(new LambdaQueryWrapper<UrlTag>().in(UrlTag::getId, tagIds));
-            List<UrlTagVo> tagVos = userTagList.stream().map(item -> BeanCopyUtils.copyBean(item, UrlTagVo.class)).collect(Collectors.toList());
-            urlRelateVo.setTags(tagVos);
+            if (CollectionUtil.isNotEmpty(tagIds)){
+                List<UrlTag> userTagList = urlTagService.list(new LambdaQueryWrapper<UrlTag>().in(UrlTag::getId, tagIds));
+                List<UrlTagVo> tagVos = userTagList.stream().map(item -> BeanCopyUtils.copyBean(item, UrlTagVo.class)).collect(Collectors.toList());
+                urlRelateVo.setTags(tagVos);
+            }
+
         }
 
         return urlRelateVo;
