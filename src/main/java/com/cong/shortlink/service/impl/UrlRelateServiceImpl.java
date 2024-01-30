@@ -187,7 +187,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
 
         //移除缓存
         RMap<String, UrlRelate> shortLinkMap = redisson.getMap(SHORT_LINK_CACHE_MAP_KEY);
-        shortLinkMap.remove(urlRelate.getSortUrl());
+        shortLinkMap.remove(oldUrlRelate.getSortUrl());
         // 更新urlRelate对象到数据库
         return this.updateById(urlRelate);
 
