@@ -185,6 +185,9 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         // 如果获取到的UrlRelate对象为空，则抛出异常，错误码为NOT_FOUND_ERROR
         ThrowUtils.throwIf(oldUrlRelate == null, ErrorCode.NOT_FOUND_ERROR);
 
+        //移除缓存
+        RMap<String, UrlRelate> shortLinkMap = redisson.getMap(SHORT_LINK_CACHE_MAP_KEY);
+        shortLinkMap.remove(urlRelate.getSortUrl());
         // 更新urlRelate对象到数据库
         return this.updateById(urlRelate);
 
@@ -289,7 +292,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         //获取标签列表
         String tagsStr = urlRelate.getTags();
         if (CharSequenceUtil.isNotBlank(tagsStr)) {
-            List<String> tagIds = JSONUtil.toBean(tagsStr, new TypeReference<>() {
+            List<String> tagIds = JSONUtil.toBean(tagsStr, new TypeReference<List<String>>() {
             }, true);
             List<UrlTag> userTagList = urlTagService.list(new LambdaQueryWrapper<UrlTag>().in(UrlTag::getId, tagIds));
             List<UrlTagVo> tagVos = userTagList.stream().map(item -> BeanCopyUtils.copyBean(item, UrlTagVo.class)).collect(Collectors.toList());
