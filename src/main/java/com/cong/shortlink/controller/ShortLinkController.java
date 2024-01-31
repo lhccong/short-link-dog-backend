@@ -1,5 +1,6 @@
 package com.cong.shortlink.controller;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cong.shortlink.annotation.AuthCheck;
@@ -7,6 +8,7 @@ import com.cong.shortlink.common.BaseResponse;
 import com.cong.shortlink.common.DeleteRequest;
 import com.cong.shortlink.common.ErrorCode;
 import com.cong.shortlink.common.ResultUtils;
+import com.cong.shortlink.constant.SystemConstants;
 import com.cong.shortlink.constant.UserConstant;
 import com.cong.shortlink.exception.BusinessException;
 import com.cong.shortlink.exception.ThrowUtils;
@@ -135,6 +137,9 @@ public class ShortLinkController {
     @PostMapping("/list/page/vo")
     @ApiOperation(value = "分页获取列表（封装类）")
     public BaseResponse<Page<UrlRelateVo>> listUrlRelateVoByPage(@RequestBody UrlRelateQueryRequest urlRelateQueryRequest) {
+        if (!StpUtil.isLogin() || StpUtil.getTokenSession().get(SystemConstants.USER_LOGIN_STATE) == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        }
         long current = urlRelateQueryRequest.getCurrent();
         long size = urlRelateQueryRequest.getPageSize();
         // 限制爬虫
