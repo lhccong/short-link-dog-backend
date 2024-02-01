@@ -12,22 +12,26 @@ public class Base62Converter {
         throw new IllegalStateException("Utility class");
     }
 
-    // 62进制使用的字符集
-    private static final String BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    // 定义 Base62 字符表
+    static final char[] BASE62_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
 
-    public static String toBase62(long decimalNumber) {
-        StringBuilder base62Number = new StringBuilder();
+    public static String toBase62(long hash) {
+    // 存储转换后的 Base62 字符串
+        StringBuilder result = new StringBuilder();
 
-        if (decimalNumber == 0) {
-            return "0";
+        // 62进制的基数
+        int radix = 62;
+
+        // 将哈希值转换为正数处理
+        hash = Math.abs(hash);
+
+        // 将哈希值转换为62进制
+        while (hash > 0) {
+            int remainder = (int) (hash % radix);
+            result.insert(0, BASE62_CHARS[remainder]);
+            hash = hash / radix;
         }
 
-        while (decimalNumber > 0) {
-            int remainder = (int) (decimalNumber % 62);
-            base62Number.insert(0, BASE62.charAt(remainder));
-            decimalNumber /= 62;
-        }
-
-        return base62Number.toString();
+        return result.toString();
     }
 }
