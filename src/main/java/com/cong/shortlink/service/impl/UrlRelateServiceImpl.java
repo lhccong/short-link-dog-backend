@@ -26,10 +26,7 @@ import com.cong.shortlink.model.vo.urltag.UrlTagVo;
 import com.cong.shortlink.service.UrlRelateService;
 import com.cong.shortlink.service.UrlTagService;
 import com.cong.shortlink.service.UserService;
-import com.cong.shortlink.utils.Base62Converter;
-import com.cong.shortlink.utils.BeanCopyUtils;
-import com.cong.shortlink.utils.NetUtils;
-import com.cong.shortlink.utils.SqlUtils;
+import com.cong.shortlink.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import net.openhft.hashing.LongHashFunction;
 import org.apache.commons.lang3.ObjectUtils;
@@ -50,6 +47,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.cong.shortlink.constant.RedissonConstants.*;
+import static com.cong.shortlink.constant.ShortLinkConstant.SHORT_LINK;
 
 /**
  * @author liuhuaicong
@@ -69,6 +67,9 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
     @Resource
     private UrlTagService urlTagService;
 
+    @Resource
+    private DistributedIdGenerator distributedIdGenerator;
+
     @Override
     public Long addUrlRelate(UrlRelateAddRequest urlRelateAddRequest) {
         //获取长链
@@ -81,7 +82,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
 
         //生成短链(后续考虑hash冲突)
         String shortUrl = this.createShortUrl(longUrl);
-
+        log.info("===========生成短链：{}===========", shortUrl);
         urlRelate.setSortUrl(shortUrl);
         //自动解析获取title
         setUrlTitleAndImg(longUrl, urlRelate);
@@ -106,9 +107,9 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         //初始化布隆过滤器：预计元素为100000000L,误差率为3%
         bloomFilter.tryInit(100000000L, 0.03);
 
-        if (bloomFilter.contains(shortUrlStr64)) {
-            //hash冲突重新生成 在结尾重新添加一个分布式id（暂用62位时间戳）
-            shortUrlStr64 = shortUrlStr64 + Base62Converter.toBase62(System.currentTimeMillis());
+        if (!bloomFilter.contains(shortUrlStr64)) {
+            //hash冲突重新生成 在结尾重新添加一个分布式id
+            shortUrlStr64 = shortUrlStr64 + distributedIdGenerator.generateDistributedId(SHORT_LINK);
         }
         bloomFilter.add(shortUrlStr64);
         return shortUrlStr64;
@@ -295,7 +296,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         if (CharSequenceUtil.isNotBlank(tagsStr)) {
             List<String> tagIds = JSONUtil.toBean(tagsStr, new TypeReference<List<String>>() {
             }, true);
-            if (CollectionUtil.isNotEmpty(tagIds)){
+            if (CollectionUtil.isNotEmpty(tagIds)) {
                 List<UrlTag> userTagList = urlTagService.list(new LambdaQueryWrapper<UrlTag>().in(UrlTag::getId, tagIds));
                 List<UrlTagVo> tagVos = userTagList.stream().map(item -> BeanCopyUtils.copyBean(item, UrlTagVo.class)).collect(Collectors.toList());
                 urlRelateVo.setTags(tagVos);
