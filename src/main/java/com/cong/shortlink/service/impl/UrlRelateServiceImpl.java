@@ -43,6 +43,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -264,6 +265,11 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
                     .eq(UrlRelate::getStatus, ShortLinkStatusEnum.PUBLISH.getValue()));
             if (urlRelate == null) {
                 throw new BusinessException(ErrorCode.LINK_ERROR, "链接不存在");
+            }
+            //过期时间
+            Date expireTime = urlRelate.getExpireTime();
+            if (expireTime != null && expireTime.before(new Date())) {
+                throw new BusinessException(ErrorCode.LINK_ERROR, "链接已过期");
             }
             addAndCheck(urlRelate);
             // 将短链接和UrlRelate对象存入shortLinkMap中
