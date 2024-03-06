@@ -214,11 +214,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * 用户注销
      *
-     * @param request 请求
+
      * @return boolean
      */
     @Override
-    public boolean userLogout(HttpServletRequest request) {
+    public boolean userLogout() {
         if (!StpUtil.isLogin() || StpUtil.getTokenSession().get(SystemConstants.USER_LOGIN_STATE) == null) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
         }

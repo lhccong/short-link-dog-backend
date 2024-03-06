@@ -77,10 +77,9 @@ public interface UserService extends IService<User> {
     /**
      * 用户注销
      *
-     * @param request 请求
      * @return boolean
      */
-    boolean userLogout(HttpServletRequest request);
+    boolean userLogout();
 
     /**
      * 获取脱敏的已登录用户信息

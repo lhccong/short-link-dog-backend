@@ -130,16 +130,12 @@ public class UserController {
     /**
      * 用户注销
      *
-     * @param request 请求
      * @return {@link BaseResponse}<{@link Boolean}>
      */
     @PostMapping("/logout")
     @ApiOperation(value = "用户注销")
-    public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
-        if (request == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        boolean result = userService.userLogout(request);
+    public BaseResponse<Boolean> userLogout() {
+        boolean result = userService.userLogout();
         return ResultUtils.success(result);
     }
 
