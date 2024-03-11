@@ -8,6 +8,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -75,7 +77,7 @@ public class NetUtils {
             String host = uri.getHost();
 
             // 校验主域名合法性
-            if (!isValidDomain(host)) {
+            if (!isValidDomain(host)||!validateUrl(longUrl)) {
                 // 链接不合法（主域名不合法）
                 throw new BusinessException(ErrorCode.LINK_ERROR);
             }
@@ -108,4 +110,13 @@ public class NetUtils {
 //        return VALID_DOMAINS.contains(domain);
         return true;
     }
+
+    public static boolean validateUrl(String url) {
+        String regex  = "^(http|https)://[a-zA-Z0-9-.]+.[a-zA-Z]{2,3}(/[^/]+)*/?$";
+
+        Pattern pattern = Pattern.compile(regex );
+        Matcher matcher = pattern.matcher(url);
+        return matcher.matches();
+    }
+
 }
