@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cong.shortlink.annotation.AuthCheck;
+import com.cong.shortlink.annotation.BlacklistInterceptor;
 import com.cong.shortlink.common.BaseResponse;
 import com.cong.shortlink.common.DeleteRequest;
 import com.cong.shortlink.common.ErrorCode;
@@ -53,6 +54,7 @@ public class ShortLinkController {
      */
     @PostMapping("/add")
     @ApiOperation(value = "添加短链")
+    @BlacklistInterceptor(key = "fingerprint", fallbackMethod = "loginErr", rageLimit = 2L, protectLimit = 3)
     public BaseResponse<Long> addUrlRelate(@RequestBody UrlRelateAddRequest urlRelateAddRequest) {
         if (urlRelateAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -194,5 +196,16 @@ public class ShortLinkController {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         return ResultUtils.success(urlRelateVo);
+    }
+
+    @BlacklistInterceptor(key = "title", fallbackMethod = "loginErr", rageLimit = 1L, protectLimit = 10)
+    @PostMapping("/login")
+    public String login(@RequestBody UrlRelateAddRequest urlRelateAddRequest) {
+        log.info("模拟登录 title:{}", urlRelateAddRequest.getTitle());
+        return "模拟登录：登录成功 " + urlRelateAddRequest.getTitle();
+    }
+
+    public String loginErr(UrlRelateAddRequest urlRelateAddRequest) {
+        return "小黑子！你没有权限访问该接口！";
     }
 }
