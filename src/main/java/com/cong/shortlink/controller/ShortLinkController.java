@@ -54,7 +54,7 @@ public class ShortLinkController {
      */
     @PostMapping("/add")
     @ApiOperation(value = "添加短链")
-    @BlacklistInterceptor(key = "fingerprint", fallbackMethod = "loginErr", rageLimit = 2L, protectLimit = 3)
+    @BlacklistInterceptor(fallbackMethod = "loginErr", rageLimit = 2L, protectLimit = 3)
     public BaseResponse<Long> addUrlRelate(@RequestBody UrlRelateAddRequest urlRelateAddRequest) {
         if (urlRelateAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
