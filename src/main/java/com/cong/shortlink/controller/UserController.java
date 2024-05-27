@@ -2,6 +2,7 @@ package com.cong.shortlink.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cong.shortlink.annotation.AuthCheck;
+import com.cong.shortlink.annotation.BlacklistInterceptor;
 import com.cong.shortlink.common.BaseResponse;
 import com.cong.shortlink.common.DeleteRequest;
 import com.cong.shortlink.common.ErrorCode;
@@ -68,6 +69,7 @@ public class UserController {
      */
     @PostMapping("/register")
     @ApiOperation(value = "用户注册")
+    @BlacklistInterceptor(fallbackMethod = "loginErr", rageLimit = 2L, protectLimit = 3)
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -312,5 +314,8 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+    public String loginErr(UserRegisterRequest userRegisterRequest) {
+        return "小黑子！你没有权限访问该接口！";
     }
 }
