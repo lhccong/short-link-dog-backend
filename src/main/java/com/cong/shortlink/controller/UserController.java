@@ -1,8 +1,10 @@
 package com.cong.shortlink.controller;
 
+import com.anji.captcha.model.common.ResponseModel;
+import com.anji.captcha.model.vo.CaptchaVO;
+import com.anji.captcha.service.CaptchaService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cong.shortlink.annotation.AuthCheck;
-import com.cong.shortlink.annotation.BlacklistInterceptor;
 import com.cong.shortlink.common.BaseResponse;
 import com.cong.shortlink.common.DeleteRequest;
 import com.cong.shortlink.common.ErrorCode;
@@ -59,6 +61,9 @@ public class UserController {
     @Resource
     private WxOpenConfig wxOpenConfig;
 
+    @Resource
+    private CaptchaService captchaService;
+
     // region 登录相关
 
     /**
@@ -69,10 +74,23 @@ public class UserController {
      */
     @PostMapping("/register")
     @ApiOperation(value = "用户注册")
-    @BlacklistInterceptor(fallbackMethod = "loginErr", rageLimit = 2L, protectLimit = 3)
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        CaptchaVO captchaVO = new CaptchaVO();
+        captchaVO.setCaptchaVerification(userRegisterRequest.getCaptchaVerification());
+        ResponseModel response = captchaService.verification(captchaVO);
+        if(!response.isSuccess()){
+            //验证码校验失败，返回信息告诉前端
+            //repCode  0000  无异常，代表成功
+            //repCode  9999  服务器内部异常
+            //repCode  0011  参数不能为空
+            //repCode  6110  验证码已失效，请重新获取
+            //repCode  6111  验证失败
+            //repCode  6112  获取验证码失败,请联系管理员
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR,"验证码错误请重试");
+
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
@@ -314,8 +332,5 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
-    }
-    public String loginErr(UserRegisterRequest userRegisterRequest) {
-        return "小黑子！你没有权限访问该接口！";
     }
 }
