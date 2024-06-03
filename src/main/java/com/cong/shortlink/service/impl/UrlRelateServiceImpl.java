@@ -1,7 +1,7 @@
 package com.cong.shortlink.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
@@ -73,30 +73,31 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
 
     @Override
     public Long addUrlRelate(UrlRelateAddRequest urlRelateAddRequest) {
-        //获取长链
-        String longUrl = urlRelateAddRequest.getLongUrl();
-        UrlRelate urlRelate = new UrlRelate();
-        urlRelate.setLongUrl(longUrl);
-
-        //校验
-        this.validUrlRelate(urlRelate, true);
-
-        //生成短链(后续考虑hash冲突)
-        String shortUrl = this.createShortUrl(longUrl);
-        log.info("===========生成短链：{}===========", shortUrl);
-        urlRelate.setSortUrl(shortUrl);
-        //自动解析获取title
-        setUrlTitleAndImg(longUrl, urlRelate);
         //获取登录用户
         User loginUser = userService.getLoginUser();
-        urlRelate.setUserId(loginUser.getId());
+        //获取长链
+        String longUrl = urlRelateAddRequest.getLongUrl();
+        synchronized (longUrl.intern()) {
+            UrlRelate urlRelate = new UrlRelate();
+            urlRelate.setLongUrl(longUrl);
 
-        //保存urlRelate到数据库
-        boolean result = this.save(urlRelate);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+            //校验
+            this.validUrlRelate(urlRelate, true);
 
-        //返回urlRelate的id
-        return urlRelate.getId();
+            //生成短链(后续考虑hash冲突)
+            String shortUrl = this.createShortUrl(longUrl);
+            log.info("===========生成短链：{}===========", shortUrl);
+            urlRelate.setSortUrl(shortUrl);
+            //自动解析获取title
+            setUrlTitleAndImg(longUrl, urlRelate);
+            urlRelate.setUserId(loginUser.getId());
+
+            //保存urlRelate到数据库
+            boolean result = this.save(urlRelate);
+            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+            //返回urlRelate的id
+            return urlRelate.getId();
+        }
 
     }
 
@@ -302,7 +303,7 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
         if (CharSequenceUtil.isNotBlank(tagsStr)) {
             List<String> tagIds = JSONUtil.toBean(tagsStr, new TypeReference<List<String>>() {
             }, true);
-            if (CollectionUtil.isNotEmpty(tagIds)) {
+            if (CollUtil.isNotEmpty(tagIds)) {
                 List<UrlTag> userTagList = urlTagService.list(new LambdaQueryWrapper<UrlTag>().in(UrlTag::getId, tagIds));
                 List<UrlTagVo> tagVos = userTagList.stream().map(item -> BeanCopyUtils.copyBean(item, UrlTagVo.class)).collect(Collectors.toList());
                 urlRelateVo.setTags(tagVos);
@@ -345,7 +346,6 @@ public class UrlRelateServiceImpl extends ServiceImpl<UrlRelateMapper, UrlRelate
 
         } catch (Exception e) {
             log.error("通过url={} 网址解析title和logo 异常：{}", url, e.getMessage());
-            e.printStackTrace();
         }
     }
 }
