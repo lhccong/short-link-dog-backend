@@ -15,7 +15,7 @@ import javax.annotation.Resource;
 public class CaptchaConfig {
 
     @Resource
-    private StringRedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
     @Bean(name = "CaptchaCacheService")
     @Primary
@@ -23,7 +23,7 @@ public class CaptchaConfig {
         //缓存类型redis/local/....
         CaptchaCacheService ret = CaptchaServiceFactory.getCache(config.getCacheType().name());
         if(ret instanceof CaptchaCacheServiceRedisImpl){
-            ((CaptchaCacheServiceRedisImpl)ret).setStringRedisTemplate(redisTemplate);
+            ((CaptchaCacheServiceRedisImpl)ret).setStringRedisTemplate(stringRedisTemplate);
         }
         return ret;
     }
